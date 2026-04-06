@@ -1,0 +1,15 @@
+- game: "Team Fortress 2"
+  icon: "http://example.com/tf2.png"
+  servers:
+    - "127.0.0.1:27015"
+
+- game: "Sven Coop"
+  icon: "http://example.com/sc.png"
+	rconpass: "myotherpass"
+  servers:
+    - "127.0.0.1:27016"
+		- "127.0.0.1:27017"
+
+- game: "Left 4 Dead 2"
+  servers:
+    - "127.0.0.1:27018"

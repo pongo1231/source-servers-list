@@ -1,0 +1,45 @@
+[package]
+name = "wasm"
+edition.workspace = true
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+test = false
+doctest = false
+
+[build-dependencies]
+fs_extra = { workspace = true }
+minify = { workspace = true }
+glob = { workspace = true }
+lightningcss = { workspace = true }
+swc = { workspace = true }
+swc_common = { workspace = true }
+
+[dependencies]
+shared = { workspace = true }
+wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+web-sys = { workspace = true, features = [
+	"Window",
+	"Location",
+	"Document",
+	"console",
+	"HtmlElement",
+	"CssStyleDeclaration",
+	"DomTokenList",
+	"Notification",
+	"NotificationPermission",
+	"NotificationOptions",
+] }
+tokio-tungstenite-wasm = { workspace = true }
+futures-util = { workspace = true }
+gloo-console = { workspace = true }
+tokio = { workspace = true, features = ["sync", "macros"] }
+gloo = { workspace = true }
+inventory = { workspace = true }
+lazy_static.workspace = true
+console_error_panic_hook = { workspace = true }
+serde_json.workspace = true

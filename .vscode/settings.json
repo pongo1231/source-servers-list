@@ -1,0 +1,21 @@
+{
+	"nixEnvSelector.nixFile": "${workspaceFolder}/flake.nix",
+	"nixEnvSelector.useFlakes": true,
+	"nix.enableLanguageServer": true,
+	"nix.serverPath": "nixd",
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"rust-analyzer.server.extraEnv": { "RUSTUP_TOOLCHAIN": "nightly" },
+	"rust-analyzer.check.command": "clippy",
+	"[nix]": {
+		"editor.defaultFormatter": "jnoortheen.nix-ide"
+	},
+	"[rust]": {
+		"editor.defaultFormatter": "rust-lang.rust-analyzer"
+	},
+	"[toml]": {
+		"editor.defaultFormatter": "tamasfe.even-better-toml"
+	},
+	"[cpp]": {
+		"editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+	}
+}

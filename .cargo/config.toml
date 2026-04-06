@@ -1,0 +1,24 @@
+[unstable]
+build-std = ["std", "panic_abort"]
+build-std-features = ["optimize_for_size"]
+codegen-backend = true
+
+[build]
+incremental = true
+target = "x86_64-unknown-linux-gnu"
+
+[profile.dev]
+codegen-backend = "cranelift"
+
+[profile.release]
+opt-level = "z"
+strip = true
+lto = "thin"
+panic = "immediate-abort"
+
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-Zlocation-detail=none", "-Zfmt-debug=none"]
+
+[package.metadata.wasm-pack.profile.dev.wasm-bindgen]
+dwarf-debug-info = true

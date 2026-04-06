@@ -1,0 +1,22 @@
+[package]
+name = "backend"
+edition.workspace = true
+
+[dependencies]
+shared = { workspace = true }
+wasm = { workspace = true }
+byteorder = { workspace = true }
+lazy_static = { workspace = true }
+rocket = { workspace = true }
+mime_guess = { workspace = true }
+rust-embed = { workspace = true }
+rocket_ws = { workspace = true }
+futures-util.workspace = true
+inventory.workspace = true
+serde_json.workspace = true
+dotenvy.workspace = true
+serde_yaml = { workspace = true }
+serde.workspace = true
+
+[package.metadata.cargo-shear]
+ignored = ["wasm"]
