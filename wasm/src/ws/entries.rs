@@ -2,15 +2,14 @@ use crate::{
 	ui::{UI_CHANNEL, msg::UIMsg},
 	ws::handler::{WSFnResult, WSMsgHandler},
 };
-use shared::{WSServerMsg, stream::WSStream};
-use tokio_tungstenite_wasm::WebSocketStream;
+use shared::WSServerMsg;
 
 inventory::submit! {
 	WSMsgHandler {
 		handler
 	}
 }
-fn handler<'a>(_: &'a mut WSStream<WebSocketStream>, msg: &'a WSServerMsg) -> WSFnResult<'a> {
+fn handler<'a>(msg: &'a WSServerMsg) -> WSFnResult<'a> {
 	Box::pin(async move {
 		match msg {
 			WSServerMsg::ResEntries(entries) => {

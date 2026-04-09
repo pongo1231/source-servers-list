@@ -39,7 +39,7 @@ fn init() {
 			let mut ws_stream = WSStream { inner: ws_stream };
 
 			for init in inventory::iter::<WSInitFunc> {
-				(init.init)(&mut ws_stream).await;
+				(init.init)().await;
 			}
 
 			_ = UI_CHANNEL.send(UIMsg::Init);
@@ -64,17 +64,11 @@ fn init() {
 							continue;
 						};
 
-						/*let Ok(msg) = serde_json::from_str::<compress_json_rs::Compressed>(msg) else {
-							continue;
-						};
-
-						let Ok(msg) = serde_json::from_value::<WSServerMsg>(compress_json_rs::decompress(msg)) else {
-							continue;
-						};*/
-
-						for handler in inventory::iter::<WSMsgHandler> {
-							(handler.handler)(&mut ws_stream, &msg).await;
-						}
+						wasm_bindgen_futures::spawn_local(async move {
+							for handler in inventory::iter::<WSMsgHandler> {
+								(handler.handler)(&msg).await;
+							}
+						});
 					}
 					Ok(msg) = ws_channel.recv() => {
 						_ = ws_stream.send(msg).await;
