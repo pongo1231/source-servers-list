@@ -17,5 +17,8 @@
 	},
 	"[cpp]": {
 		"editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+	},
+	"[just]": {
+		"editor.defaultFormatter": "nefrob.vscode-just-syntax"
 	}
 }
