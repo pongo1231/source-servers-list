@@ -44,14 +44,6 @@ fn route_ws(mut shutdown: Shutdown, ws: rocket_ws::WebSocket) -> rocket_ws::Chan
 							continue;
 						};
 
-						/*let Ok(msg) = serde_json::from_str::<compress_json_rs::Compressed>(msg) else {
-							continue;
-						};
-
-						let Ok(msg) = serde_json::from_value::<WSClientMsg>(compress_json_rs::decompress(msg)) else {
-							continue;
-						};*/
-
 						for handler in inventory::iter::<WSMsgHandler> {
 							(handler.handler)(&mut ws_stream, &msg).await;
 						}
