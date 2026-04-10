@@ -4,9 +4,8 @@ mod env;
 mod handler;
 mod rcon;
 mod ws;
-use crate::handler::RouteCollector;
-use rocket::{Build, Rocket, Route, response::Responder};
-use shared::handler::InitFunc;
+use crate::handler::{InitFunc, RouteCollector};
+use rocket::{Build, Rocket, Route, response::Responder, tokio::spawn};
 
 #[derive(rust_embed::RustEmbed)]
 #[folder = "../dist"]
@@ -29,7 +28,9 @@ impl<'a> Responder<'a, 'static> for EmbeddedFile {
 #[rocket::launch]
 async fn rocket() -> Rocket<Build> {
 	for init in inventory::iter::<InitFunc> {
-		(init.init)();
+		spawn(async {
+			(init.init)().await;
+		});
 	}
 
 	rocket::build()

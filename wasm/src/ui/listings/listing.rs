@@ -1,22 +1,24 @@
 use gloo::events::EventListener;
+use ref_thread_local::RefThreadLocal;
 use shared::{ServerListingStatus, WSClientMsg};
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, window};
-use crate::{notif, ui::{UI_CHANNEL, handler::UIMsgHandler, listings::{ClientServerEntry, ELEMENT_LISTENERS, SERVER_ENTRIES, SERVER_PLAYERS}, msg::UIMsg}, ws::WS_CHANNEL};
+use crate::{handler::MFnResult, notif, ui::{UI_CHANNEL, handler::UIMsgHandler, listings::{ClientServerEntry, SERVER_ENTRIES, SERVER_PLAYERS}, msg::UIMsg}, ws::WS_CHANNEL};
 
 inventory::submit! {
 	UIMsgHandler {
 		handler
 	}
 }
-fn handler(msg: &UIMsg) {
+fn handler(msg: UIMsg) -> MFnResult<'static> {
+	Box::pin(async {
 	let UIMsg::UpdateListing(listing) = msg else {
 		return;
 	};
 
 	let doc = window().unwrap().document().unwrap();
 
-	let mut server_items = SERVER_ENTRIES.lock().unwrap();
+	let mut server_items = SERVER_ENTRIES.borrow_mut();
 	let servers_container = doc.get_element_by_id("ServersContainer").unwrap();
 
 	let client_entry = match server_items.get_mut(&listing.id) {
@@ -40,8 +42,7 @@ fn handler(msg: &UIMsg) {
 			{
 				let doc = doc.clone();
 				let id = listing.id;
-				ELEMENT_LISTENERS.with(|listeners| {
-					listeners.borrow_mut().push(EventListener::new(
+				 EventListener::new(
 						&item,
 						"click",
 						move |_| {
@@ -54,18 +55,16 @@ fn handler(msg: &UIMsg) {
 							if detailed_item.class_list().contains("expanded") {
 								_ = detailed_item.class_list().remove_1("expanded");
 							} else {
-								let server_players = SERVER_PLAYERS.lock().unwrap();
+								let server_players = SERVER_PLAYERS.borrow();
 								let Some(players) = server_players.get(&id) else {
-									_ = WS_CHANNEL.send(WSClientMsg::ReqPlayers(id));
-									_ = UI_CHANNEL.send(UIMsg::UpdatePlayers(id, Vec::from(["<img class='Spinner'/>".to_string()])));
+									_ = WS_CHANNEL.borrow().send(WSClientMsg::ReqPlayers(id));
+									_ = UI_CHANNEL.borrow().send(UIMsg::UpdatePlayers(id, Vec::from(["<img class='Spinner'/>".to_string()])));
 									return;
 								};
 
-								_ = UI_CHANNEL.send(UIMsg::UpdatePlayers(id, players.clone()));
+								_ = UI_CHANNEL.borrow().send(UIMsg::UpdatePlayers(id, players.clone()));
 							}
-						},
-					));
-				});
+						}).forget();
 			}
 
 			server_items.get_mut(&listing.id).unwrap()
@@ -164,5 +163,6 @@ fn handler(msg: &UIMsg) {
 		}
 	}
 
-	SERVER_PLAYERS.lock().unwrap().remove(&listing.id);
+	SERVER_PLAYERS.borrow_mut().remove(&listing.id);
+})
 }

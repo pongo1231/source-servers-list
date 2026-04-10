@@ -1,13 +1,12 @@
-use crate::handler::{WSFnResult, WSMsgHandler};
-use crate::ws::WS_CHANNEL;
+use crate::handler::{InitFunc, MFnResult};
+use crate::ws::WS_GLOBAL_CHANNEL;
+use crate::ws::handler::WSMsgHandler;
 use crate::{env, rcon};
 use lazy_static::lazy_static;
 use rocket::tokio;
 use rocket::tokio::sync::broadcast;
-use rocket_ws::stream::DuplexStream;
+use rocket::tokio::time::sleep;
 use serde::Deserialize;
-use shared::handler::InitFunc;
-use shared::stream::WSStream;
 use shared::*;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -57,16 +56,16 @@ inventory::submit! {
 		init
 	}
 }
-fn init() {
-	tokio::spawn(async {
+fn init() -> MFnResult<'static> {
+	Box::pin(async {
 		loop {
-			tokio::time::sleep(Duration::from_mins(5)).await;
+			sleep(Duration::from_mins(5)).await;
 
-			if WS_CHANNEL.receiver_count() > 0 {
+			if WS_GLOBAL_CHANNEL.receiver_count() > 0 {
 				stream_entries(None).await;
 			}
 		}
-	});
+	})
 }
 
 inventory::submit! {
@@ -74,39 +73,32 @@ inventory::submit! {
 		handler
 	}
 }
-fn handler<'a>(
-	mut ws_stream: &'a mut WSStream<DuplexStream>,
-	msg: &'a WSClientMsg,
-) -> WSFnResult<'a> {
+fn handler(ws_channel: broadcast::Sender<WSServerMsg>, msg: WSClientMsg) -> MFnResult<'static> {
 	Box::pin(async move {
-		match &msg {
+		match msg {
 			WSClientMsg::ReqEntries => {
-				stream_entries(Some(&mut ws_stream)).await;
+				stream_entries(Some(ws_channel.clone())).await;
 			}
 			WSClientMsg::ReqPlayers(id) => {
 				let player_names = SERVER_CACHED_PLAYERS
 					.lock()
 					.unwrap()
-					.get(id)
+					.get(&id)
 					.unwrap_or(&Vec::new())
 					.clone();
 
-				_ = ws_stream
-					.send(WSServerMsg::ResPlayers(*id, player_names))
-					.await;
+				_ = ws_channel.send(WSServerMsg::ResPlayers(id, player_names));
 			}
 			_ => {}
 		}
 	})
 }
 
-async fn stream_entries(mut stream: Option<&mut WSStream<DuplexStream>>) {
+async fn stream_entries(mut ws_channel: Option<broadcast::Sender<WSServerMsg>>) {
 	let mut cached_results = SERVER_CACHED_RESULTS.lock().unwrap().clone();
 
-	if let Some(ref mut stream) = stream {
-		_ = stream
-			.send(WSServerMsg::ResEntries(cached_results.clone()))
-			.await;
+	if let Some(ref mut stream) = ws_channel {
+		_ = stream.send(WSServerMsg::ResEntries(cached_results.clone()));
 	}
 
 	if SERVER_CACHE_LAST_TIMESTAMP
@@ -274,7 +266,7 @@ async fn stream_entries(mut stream: Option<&mut WSStream<DuplexStream>>) {
 	while let Ok(msg) = channel_rx.recv().await {
 		let (i, listing) = msg;
 
-		_ = WS_CHANNEL.send(WSServerMsg::ResEntries(Vec::from([listing.clone()])));
+		_ = WS_GLOBAL_CHANNEL.send(WSServerMsg::ResEntries(Vec::from([listing.clone()])));
 
 		SERVER_CACHED_RESULTS.lock().unwrap()[i] = listing;
 	}

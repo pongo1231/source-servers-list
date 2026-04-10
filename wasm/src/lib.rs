@@ -1,8 +1,10 @@
+mod handler;
 mod notif;
 mod ui;
 mod ws;
-use shared::handler::InitFunc;
+use crate::handler::InitFunc;
 use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen_futures::spawn_local;
 
 #[wasm_bindgen]
 pub async fn init_page() {
@@ -10,6 +12,8 @@ pub async fn init_page() {
 	console_error_panic_hook::set_once();
 
 	for init in inventory::iter::<InitFunc> {
-		(init.init)();
+		spawn_local(async {
+			(init.init)().await;
+		});
 	}
 }

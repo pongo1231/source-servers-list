@@ -1,4 +1,4 @@
-use shared::handler::InitFunc;
+use crate::handler::{InitFunc, MFnResult};
 use web_sys::{Notification, NotificationOptions};
 
 inventory::submit! {
@@ -7,8 +7,10 @@ inventory::submit! {
 	}
 }
 
-fn init() {
-	_ = Notification::request_permission();
+fn init() -> MFnResult<'static> {
+	Box::pin(async {
+		_ = Notification::request_permission();
+	})
 }
 
 pub fn show(title: &str, body: &str) {

@@ -40,6 +40,6 @@ gloo-console = { workspace = true }
 tokio = { workspace = true, features = ["sync", "macros"] }
 gloo = { workspace = true }
 inventory = { workspace = true }
-lazy_static.workspace = true
 console_error_panic_hook = { workspace = true }
 serde_json.workspace = true
+ref_thread_local = { workspace = true }

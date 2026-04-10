@@ -1,7 +1,9 @@
 use crate::{
+	handler::MFnResult,
 	ui::{UI_CHANNEL, msg::UIMsg},
-	ws::handler::{WSFnResult, WSMsgHandler},
+	ws::handler::WSMsgHandler,
 };
+use ref_thread_local::RefThreadLocal;
 use shared::WSServerMsg;
 
 inventory::submit! {
@@ -9,16 +11,18 @@ inventory::submit! {
 		handler
 	}
 }
-fn handler<'a>(msg: &'a WSServerMsg) -> WSFnResult<'a> {
+fn handler(msg: WSServerMsg) -> MFnResult<'static> {
 	Box::pin(async move {
 		match msg {
 			WSServerMsg::ResEntries(entries) => {
 				for listing in entries {
-					_ = UI_CHANNEL.send(UIMsg::UpdateListing(listing.clone()));
+					_ = UI_CHANNEL.borrow_mut().send(UIMsg::UpdateListing(listing));
 				}
 			}
 			WSServerMsg::ResPlayers(id, player_names) => {
-				_ = UI_CHANNEL.send(UIMsg::UpdatePlayers(*id, player_names.clone()));
+				_ = UI_CHANNEL
+					.borrow_mut()
+					.send(UIMsg::UpdatePlayers(id, player_names));
 			}
 			_ => {}
 		}

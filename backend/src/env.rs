@@ -1,4 +1,4 @@
-use shared::handler::InitFunc;
+use crate::handler::{InitFunc, MFnResult};
 use std::sync::OnceLock;
 
 pub static RCON_PASSWORD: OnceLock<String> = OnceLock::new();
@@ -8,8 +8,10 @@ inventory::submit! {
 		init
 	}
 }
-fn init() {
-	_ = dotenvy::dotenv();
+fn init() -> MFnResult<'static> {
+	Box::pin(async {
+		_ = dotenvy::dotenv();
 
-	_ = RCON_PASSWORD.set(std::env::var("RCON_PASSWORD").unwrap_or_default());
+		_ = RCON_PASSWORD.set(std::env::var("RCON_PASSWORD").unwrap_or_default());
+	})
 }
