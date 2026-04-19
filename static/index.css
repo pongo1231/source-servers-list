@@ -86,12 +86,12 @@ img {
 	padding: 2rem;
 	min-height: 20rem;
 	position: relative;
-	transition: background-color 0.2s linear;
+	transition: background-color 0.2s linear !important;
 }
 
 #ServersContainer .ServerContainer:hover {
 	cursor: pointer;
-	background-color: rgba(120, 120, 120, 0.3);
+	background-color: rgba(120, 120, 120, 0.3) !important;
 }
 
 .flash-highlight {
