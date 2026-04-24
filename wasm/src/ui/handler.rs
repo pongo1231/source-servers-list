@@ -2,7 +2,7 @@ use crate::{handler::MFnResult, ui::msg::UIMsg};
 
 inventory::collect!(UIInitFunc);
 pub(super) struct UIInitFunc {
-	pub init: fn() -> MFnResult<'static>,
+	pub handler: fn() -> MFnResult<'static>,
 }
 
 inventory::collect!(UIMsgHandler);

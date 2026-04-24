@@ -18,7 +18,7 @@ ref_thread_local! {
 
 inventory::submit! {
 	UIInitFunc {
-		init
+		handler: init
 	}
 }
 fn init() -> MFnResult<'static> {

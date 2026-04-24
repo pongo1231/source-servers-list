@@ -4,7 +4,7 @@ use shared::{WSClientMsg, WSServerMsg};
 
 inventory::collect!(WSInitFunc);
 pub struct WSInitFunc {
-	pub init: fn(broadcast::Sender<WSServerMsg>) -> MFnResult<'static>,
+	pub handler: fn(broadcast::Sender<WSServerMsg>) -> MFnResult<'static>,
 }
 
 inventory::collect!(WSMsgHandler);

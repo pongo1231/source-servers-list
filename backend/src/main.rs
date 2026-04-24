@@ -1,5 +1,3 @@
-#![feature(time_systemtime_limits)]
-
 mod env;
 mod handler;
 mod rcon;
@@ -29,7 +27,7 @@ impl<'a> Responder<'a, 'static> for EmbeddedFile {
 async fn rocket() -> Rocket<Build> {
 	for init in inventory::iter::<InitFunc> {
 		spawn(async {
-			(init.init)().await;
+			(init.handler)().await;
 		});
 	}
 

@@ -34,7 +34,7 @@ fn route_ws(mut shutdown: Shutdown, ws: rocket_ws::WebSocket) -> rocket_ws::Chan
 			for init in inventory::iter::<WSInitFunc> {
 				let ws_channel = ws_channel.clone();
 				spawn(async {
-					(init.init)(ws_channel).await;
+					(init.handler)(ws_channel).await;
 				});
 			}
 

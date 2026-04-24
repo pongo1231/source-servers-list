@@ -1,8 +1,7 @@
 mod entries;
-mod handler;
+pub mod handler;
 use crate::{
 	handler::{InitFunc, MFnResult},
-	ui::{UI_CHANNEL, msg::UIMsg},
 	ws::handler::{WSInitFunc, WSMsgHandler},
 };
 use futures_util::StreamExt;
@@ -19,7 +18,7 @@ ref_thread_local! {
 
 inventory::submit! {
 	InitFunc {
-		init
+		handler: init
 	}
 }
 fn init() -> MFnResult<'static> {
@@ -44,11 +43,9 @@ fn init() -> MFnResult<'static> {
 
 				for init in inventory::iter::<WSInitFunc> {
 					spawn_local(async {
-						(init.init)().await;
+						(init.handler)().await;
 					});
 				}
-
-				_ = UI_CHANNEL.borrow_mut().send(UIMsg::Init);
 
 				_ = ws_stream.send(WSClientMsg::ReqEntries).await;
 

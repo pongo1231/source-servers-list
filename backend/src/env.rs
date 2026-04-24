@@ -5,7 +5,7 @@ pub static RCON_PASSWORD: OnceLock<String> = OnceLock::new();
 
 inventory::submit! {
 	InitFunc {
-		init
+		handler: init
 	}
 }
 fn init() -> MFnResult<'static> {

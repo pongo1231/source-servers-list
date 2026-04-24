@@ -7,6 +7,7 @@ use crate::{
 		handler::{UIInitFunc, UIMsgHandler},
 		msg::UIMsg,
 	},
+	ws::handler::WSInitFunc,
 };
 use gloo::utils::window;
 use ref_thread_local::{RefThreadLocal, ref_thread_local};
@@ -21,7 +22,7 @@ ref_thread_local! {
 
 inventory::submit! {
 	InitFunc {
-		init
+		handler: init
 	}
 }
 fn init() -> MFnResult<'static> {
@@ -29,7 +30,7 @@ fn init() -> MFnResult<'static> {
 		let mut ui_channel = UI_CHANNEL.borrow().subscribe();
 		while let Ok(msg) = ui_channel.recv().await {
 			match msg {
-				UIMsg::Init => {
+				UIMsg::WSInit => {
 					_ = window()
 						.document()
 						.unwrap()
@@ -42,7 +43,7 @@ fn init() -> MFnResult<'static> {
 
 					for init in inventory::iter::<UIInitFunc> {
 						spawn_local(async {
-							(init.init)().await;
+							(init.handler)().await;
 						});
 					}
 				}
@@ -56,5 +57,16 @@ fn init() -> MFnResult<'static> {
 				}
 			}
 		}
+	})
+}
+
+inventory::submit! {
+	WSInitFunc {
+		handler: ws_init
+	}
+}
+fn ws_init() -> MFnResult<'static> {
+	Box::pin(async {
+		_ = UI_CHANNEL.borrow_mut().send(UIMsg::WSInit);
 	})
 }

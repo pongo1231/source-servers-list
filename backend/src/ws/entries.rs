@@ -9,8 +9,9 @@ use rocket::tokio::time::sleep;
 use serde::Deserialize;
 use shared::*;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 #[derive(Deserialize)]
 struct GameListing {
@@ -21,7 +22,7 @@ struct GameListing {
 }
 
 lazy_static! {
-	static ref SERVER_CACHE_LAST_TIMESTAMP: Mutex<SystemTime> = Mutex::new(SystemTime::MIN);
+	static ref SERVER_CACHED_RESULTS_FIRST_RUN: AtomicBool = AtomicBool::new(true);
 	static ref SERVER_CACHED_RESULTS: Arc<Mutex<Vec<ServerListing>>> = Arc::new(Mutex::new({
 		static mut ID: u16 = 0;
 		let mut entries = Vec::<ServerListing>::new();
@@ -53,7 +54,7 @@ lazy_static! {
 
 inventory::submit! {
 	InitFunc {
-		init
+		handler: init
 	}
 }
 fn init() -> MFnResult<'static> {
@@ -99,19 +100,11 @@ async fn stream_entries(mut ws_channel: Option<broadcast::Sender<WSServerMsg>>) 
 
 	if let Some(ref mut stream) = ws_channel {
 		_ = stream.send(WSServerMsg::ResEntries(cached_results.clone()));
-	}
 
-	if SERVER_CACHE_LAST_TIMESTAMP
-		.lock()
-		.unwrap()
-		.elapsed()
-		.unwrap()
-		< Duration::from_mins(2)
-	{
-		return;
+		if !SERVER_CACHED_RESULTS_FIRST_RUN.swap(false, Ordering::Relaxed) {
+			return;
+		}
 	}
-
-	*SERVER_CACHE_LAST_TIMESTAMP.lock().unwrap() = SystemTime::now();
 
 	let (channel_tx, mut channel_rx) = broadcast::channel::<(usize, ServerListing)>(100);
 
@@ -208,12 +201,7 @@ async fn stream_entries(mut ws_channel: Option<broadcast::Sender<WSServerMsg>>) 
 						break 'max;
 					};
 
-					info.max = max
-						- if listing.game.contains("Team Fortress") && max > 0 {
-							1
-						} else {
-							0
-						}; // HACK
+					info.max = max;
 				}
 
 				let mut player_names = Vec::<String>::new();
@@ -236,6 +224,10 @@ async fn stream_entries(mut ws_channel: Option<broadcast::Sender<WSServerMsg>>) 
 					let mut name = name.to_string();
 
 					if name == "SourceTV" {
+						if info.max > 0 {
+							info.max -= 1;
+						}
+
 						continue;
 					} else if r_split.contains("BOT") {
 						name = format!("(BOT) {}", name);

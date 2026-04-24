@@ -13,7 +13,7 @@ pub async fn init_page() {
 
 	for init in inventory::iter::<InitFunc> {
 		spawn_local(async {
-			(init.init)().await;
+			(init.handler)().await;
 		});
 	}
 }

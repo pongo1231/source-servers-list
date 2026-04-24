@@ -3,10 +3,9 @@ use web_sys::{Notification, NotificationOptions};
 
 inventory::submit! {
 	InitFunc {
-		init
+		handler: init
 	}
 }
-
 fn init() -> MFnResult<'static> {
 	Box::pin(async {
 		_ = Notification::request_permission();
@@ -15,7 +14,7 @@ fn init() -> MFnResult<'static> {
 
 pub fn show(title: &str, body: &str) {
 	let opts = NotificationOptions::new();
-	opts.set_icon("favicon.ico");
+	opts.set_icon("/favicon.ico");
 	opts.set_body(body);
 
 	Notification::new_with_options(title, &opts).unwrap();
