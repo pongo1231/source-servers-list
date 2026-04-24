@@ -22,7 +22,7 @@ struct GameListing {
 }
 
 lazy_static! {
-	static ref SERVER_CACHED_RESULTS_FIRST_RUN: AtomicBool = AtomicBool::new(true);
+	static ref SERVER_CACHED_RESULTS_ON_DEMAND: AtomicBool = AtomicBool::new(true);
 	static ref SERVER_CACHED_RESULTS: Arc<Mutex<Vec<ServerListing>>> = Arc::new(Mutex::new({
 		static mut ID: u16 = 0;
 		let mut entries = Vec::<ServerListing>::new();
@@ -62,7 +62,9 @@ fn init() -> MFnResult<'static> {
 		loop {
 			sleep(Duration::from_mins(5)).await;
 
-			if WS_GLOBAL_CHANNEL.receiver_count() > 0 {
+			if WS_GLOBAL_CHANNEL.receiver_count() == 0 {
+				SERVER_CACHED_RESULTS_ON_DEMAND.swap(true, Ordering::Relaxed);
+			} else {
 				stream_entries(None).await;
 			}
 		}
@@ -101,7 +103,7 @@ async fn stream_entries(mut ws_channel: Option<broadcast::Sender<WSServerMsg>>) 
 	if let Some(ref mut stream) = ws_channel {
 		_ = stream.send(WSServerMsg::ResEntries(cached_results.clone()));
 
-		if !SERVER_CACHED_RESULTS_FIRST_RUN.swap(false, Ordering::Relaxed) {
+		if !SERVER_CACHED_RESULTS_ON_DEMAND.swap(false, Ordering::Relaxed) {
 			return;
 		}
 	}
