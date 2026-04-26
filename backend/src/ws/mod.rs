@@ -1,20 +1,20 @@
 mod entries;
 mod handler;
+use std::sync::LazyLock;
+
 use crate::{
 	handler::RouteCollector,
 	ws::handler::{WSInitFunc, WSMsgHandler},
 };
 use futures_util::StreamExt;
-use lazy_static::lazy_static;
 use rocket::{
 	Shutdown,
 	tokio::{spawn, sync::broadcast},
 };
 use shared::{WSClientMsg, WSServerMsg, stream::WSStream};
 
-lazy_static! {
-	pub static ref WS_GLOBAL_CHANNEL: broadcast::Sender<WSServerMsg> = broadcast::channel(100).0;
-}
+pub static WS_GLOBAL_CHANNEL: LazyLock<broadcast::Sender<WSServerMsg>> =
+	LazyLock::new(|| broadcast::channel(100).0);
 
 inventory::submit! {
 	RouteCollector {

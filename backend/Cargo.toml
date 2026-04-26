@@ -6,7 +6,6 @@ edition.workspace = true
 shared = { workspace = true }
 wasm = { workspace = true }
 byteorder = { workspace = true }
-lazy_static = { workspace = true }
 rocket = { workspace = true }
 mime_guess = { workspace = true }
 rust-embed = { workspace = true }

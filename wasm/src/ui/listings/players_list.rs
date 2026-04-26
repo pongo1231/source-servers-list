@@ -2,7 +2,6 @@ use crate::{
 	handler::MFnResult,
 	ui::{handler::UIMsgHandler, listings::SERVER_PLAYERS, msg::UIMsg},
 };
-use ref_thread_local::RefThreadLocal;
 use web_sys::window;
 
 inventory::submit! {
@@ -18,7 +17,7 @@ fn handler(msg: UIMsg) -> MFnResult<'static> {
 
 		let doc = window().unwrap().document().unwrap();
 
-		SERVER_PLAYERS.borrow_mut().insert(id, player_names.clone());
+		SERVER_PLAYERS.lock().await.insert(id, player_names.clone());
 
 		let Some(elem) = doc.get_element_by_id(format!("{id}expanded").as_str()) else {
 			return;

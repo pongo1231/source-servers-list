@@ -2,15 +2,14 @@ use crate::handler::{InitFunc, MFnResult};
 use crate::ws::WS_GLOBAL_CHANNEL;
 use crate::ws::handler::WSMsgHandler;
 use crate::{env, rcon};
-use lazy_static::lazy_static;
 use rocket::tokio;
-use rocket::tokio::sync::broadcast;
+use rocket::tokio::sync::{Mutex, broadcast};
 use rocket::tokio::time::sleep;
 use serde::Deserialize;
 use shared::*;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 #[derive(Deserialize)]
@@ -21,36 +20,34 @@ struct GameListing {
 	servers: Vec<String>,
 }
 
-lazy_static! {
-	static ref SERVER_CACHED_RESULTS_ON_DEMAND: AtomicBool = AtomicBool::new(true);
-	static ref SERVER_CACHED_RESULTS: Arc<Mutex<Vec<ServerListing>>> = Arc::new(Mutex::new({
-		static mut ID: u16 = 0;
-		let mut entries = Vec::<ServerListing>::new();
+static SERVER_CACHED_RESULTS_ON_DEMAND: AtomicBool = AtomicBool::new(true);
+static SERVER_CACHED_RESULTS: LazyLock<Mutex<Vec<ServerListing>>> = LazyLock::new(|| {
+	static mut ID: u16 = 0;
+	let mut entries = Vec::<ServerListing>::new();
 
-		let file_content = std::fs::read("servers.yaml").expect("servers.yaml not found!");
-		for listing in serde_yaml::from_slice::<Vec<GameListing>>(&file_content)
-			.expect("servers.yaml is malformed!")
-		{
-			for server in listing.servers {
-				entries.push(ServerListing {
-					id: unsafe {
-						ID += 1;
-						ID - 1
-					},
-					game: listing.game.clone(),
-					addr: server.clone(),
-					status: ServerListingStatus::Pending,
-					icon_name: listing.icon.clone(),
-					rcon_password: listing.rconpass.clone(),
-					..Default::default()
-				});
-			}
+	let file_content = std::fs::read("servers.yaml").expect("servers.yaml not found!");
+	for listing in serde_yaml::from_slice::<Vec<GameListing>>(&file_content)
+		.expect("servers.yaml is malformed!")
+	{
+		for server in listing.servers {
+			entries.push(ServerListing {
+				id: unsafe {
+					ID += 1;
+					ID - 1
+				},
+				game: listing.game.clone(),
+				addr: server.clone(),
+				status: ServerListingStatus::Pending,
+				icon_name: listing.icon.clone(),
+				rcon_password: listing.rconpass.clone(),
+				..Default::default()
+			});
 		}
-		entries
-	}));
-	static ref SERVER_CACHED_PLAYERS: Arc<Mutex<HashMap<u16, Vec<String>>>> =
-		Arc::new(Mutex::new(HashMap::new()));
-}
+	}
+	Mutex::new(entries)
+});
+static SERVER_CACHED_PLAYERS: LazyLock<Mutex<HashMap<u16, Vec<String>>>> =
+	LazyLock::new(|| Mutex::new(HashMap::new()));
 
 inventory::submit! {
 	InitFunc {
@@ -85,7 +82,7 @@ fn handler(ws_channel: broadcast::Sender<WSServerMsg>, msg: WSClientMsg) -> MFnR
 			WSClientMsg::ReqPlayers(id) => {
 				let player_names = SERVER_CACHED_PLAYERS
 					.lock()
-					.unwrap()
+					.await
 					.get(&id)
 					.unwrap_or(&Vec::new())
 					.clone();
@@ -98,7 +95,7 @@ fn handler(ws_channel: broadcast::Sender<WSServerMsg>, msg: WSClientMsg) -> MFnR
 }
 
 async fn stream_entries(mut ws_channel: Option<broadcast::Sender<WSServerMsg>>) {
-	let mut cached_results = SERVER_CACHED_RESULTS.lock().unwrap().clone();
+	let mut cached_results = SERVER_CACHED_RESULTS.lock().await.clone();
 
 	if let Some(ref mut stream) = ws_channel {
 		_ = stream.send(WSServerMsg::ResEntries(cached_results.clone()));
@@ -241,7 +238,7 @@ async fn stream_entries(mut ws_channel: Option<broadcast::Sender<WSServerMsg>>) 
 				}
 				SERVER_CACHED_PLAYERS
 					.lock()
-					.unwrap()
+					.await
 					.insert(listing.id, player_names);
 			}
 
@@ -262,6 +259,6 @@ async fn stream_entries(mut ws_channel: Option<broadcast::Sender<WSServerMsg>>) 
 
 		_ = WS_GLOBAL_CHANNEL.send(WSServerMsg::ResEntries(Vec::from([listing.clone()])));
 
-		SERVER_CACHED_RESULTS.lock().unwrap()[i] = listing;
+		SERVER_CACHED_RESULTS.lock().await[i] = listing;
 	}
 }

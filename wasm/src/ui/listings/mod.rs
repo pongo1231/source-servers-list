@@ -1,20 +1,18 @@
 mod listing;
 mod players_list;
 use crate::{handler::MFnResult, ui::handler::UIInitFunc};
-use ref_thread_local::{RefThreadLocal, ref_thread_local};
-use std::collections::HashMap;
+use futures_util::lock::Mutex;
+use std::{collections::HashMap, sync::LazyLock};
 use web_sys::{HtmlElement, window};
 
 struct ClientServerEntry {
 	pub html_element: HtmlElement,
 	pub first_update: bool,
 }
-ref_thread_local! {
-	static managed SERVER_ENTRIES: HashMap::<u16, ClientServerEntry> =
-		HashMap::new();
-	static managed SERVER_PLAYERS: HashMap::<u16, Vec<String>> =
-		HashMap::new();
-}
+static SERVER_ENTRIES: LazyLock<Mutex<HashMap<u16, ClientServerEntry>>> =
+	LazyLock::new(|| Mutex::new(HashMap::new()));
+static SERVER_PLAYERS: LazyLock<Mutex<HashMap<u16, Vec<String>>>> =
+	LazyLock::new(|| Mutex::new(HashMap::new()));
 
 inventory::submit! {
 	UIInitFunc {
@@ -31,7 +29,7 @@ fn init() -> MFnResult<'static> {
 			.unwrap()
 			.set_inner_html("");
 
-		SERVER_ENTRIES.borrow_mut().clear();
-		SERVER_PLAYERS.borrow_mut().clear();
+		SERVER_ENTRIES.lock().await.clear();
+		SERVER_PLAYERS.lock().await.clear();
 	})
 }

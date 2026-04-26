@@ -1,20 +1,20 @@
 mod entries;
 pub mod handler;
+use std::sync::LazyLock;
+
 use crate::{
 	handler::{InitFunc, MFnResult},
 	ws::handler::{WSInitFunc, WSMsgHandler},
 };
 use futures_util::StreamExt;
 use gloo_console::*;
-use ref_thread_local::{RefThreadLocal, ref_thread_local};
 use shared::{WSClientMsg, WSServerMsg, stream::WSStream};
 use tokio::sync::broadcast;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::window;
 
-ref_thread_local! {
-	pub static managed WS_CHANNEL: broadcast::Sender::<WSClientMsg> = broadcast::channel(100).0;
-}
+pub static WS_CHANNEL: LazyLock<broadcast::Sender<WSClientMsg>> =
+	LazyLock::new(|| broadcast::channel(100).0);
 
 inventory::submit! {
 	InitFunc {
@@ -49,7 +49,7 @@ fn init() -> MFnResult<'static> {
 
 				_ = ws_stream.send(WSClientMsg::ReqEntries).await;
 
-				let mut ws_channel = WS_CHANNEL.borrow().subscribe();
+				let mut ws_channel = WS_CHANNEL.subscribe();
 				loop {
 					tokio::select! {
 						msg = ws_stream.next() => {

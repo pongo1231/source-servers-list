@@ -42,4 +42,3 @@ gloo = { workspace = true }
 inventory = { workspace = true }
 console_error_panic_hook = { workspace = true }
 serde_json.workspace = true
-ref_thread_local = { workspace = true }

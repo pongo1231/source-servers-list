@@ -3,7 +3,6 @@ use crate::{
 	ui::{UI_CHANNEL, msg::UIMsg},
 	ws::handler::WSMsgHandler,
 };
-use ref_thread_local::RefThreadLocal;
 use shared::WSServerMsg;
 
 inventory::submit! {
@@ -16,13 +15,11 @@ fn handler(msg: WSServerMsg) -> MFnResult<'static> {
 		match msg {
 			WSServerMsg::ResEntries(entries) => {
 				for listing in entries {
-					_ = UI_CHANNEL.borrow_mut().send(UIMsg::UpdateListing(listing));
+					_ = UI_CHANNEL.send(UIMsg::UpdateListing(listing));
 				}
 			}
 			WSServerMsg::ResPlayers(id, player_names) => {
-				_ = UI_CHANNEL
-					.borrow_mut()
-					.send(UIMsg::UpdatePlayers(id, player_names));
+				_ = UI_CHANNEL.send(UIMsg::UpdatePlayers(id, player_names));
 			}
 			_ => {}
 		}
