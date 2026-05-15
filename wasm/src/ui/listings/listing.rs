@@ -94,7 +94,10 @@ fn handler(msg: UIMsg) -> MFnResult<'static> {
 			_ = item.client_width();
 			_ = item.class_list().add_1("flash-highlight");
 
-			if listing.status == ServerListingStatus::Reachable {
+			if listing.status == ServerListingStatus::Reachable
+				&& doc.hidden()
+				&& !doc.has_focus().unwrap_or_default()
+			{
 				notif::show(
 					"Server Update",
 					format!(
