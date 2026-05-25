@@ -103,12 +103,7 @@ fn handler(msg: UIMsg) -> MFnResult<'static> {
 					format!(
 						"{}\n{}{}{}",
 						listing.game,
-						listing
-							.name
-							.split("|")
-							.nth(1)
-							.unwrap_or(listing.name.as_str())
-							.trim(),
+						listing.name,
 						if let Some(ref info) = listing.info
 							&& !info.map.is_empty()
 						{
@@ -156,7 +151,7 @@ fn handler(msg: UIMsg) -> MFnResult<'static> {
 					"{}{}</p><h2>{}</h2>{}<br><a href=\"steam://connect/{}\" onclick=\"event.stopPropagation()\">Connect</a><div class='details' id='{}expanded'></div>",
 					if let Some(icon_name) = &listing.icon_name { format!("<p><img class='bg' src='{}' width='32'/>", icon_name) } else { "".to_string() },
 					listing.game,
-					listing.name.split("|").nth(1).unwrap_or(listing.name.as_str()).trim(),
+					listing.name,
 					if let Some(ref info) = listing.info {
 						format!(
 							"Map: {}<br>Players: {}",
