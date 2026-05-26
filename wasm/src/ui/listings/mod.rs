@@ -9,9 +9,14 @@ struct ClientServerEntry {
 	pub html_element: HtmlElement,
 	pub first_update: bool,
 }
+struct GameSection {
+	pub grid: HtmlElement,
+}
 static SERVER_ENTRIES: LazyLock<Mutex<HashMap<u16, ClientServerEntry>>> =
 	LazyLock::new(|| Mutex::new(HashMap::new()));
 static SERVER_PLAYERS: LazyLock<Mutex<HashMap<u16, Vec<String>>>> =
+	LazyLock::new(|| Mutex::new(HashMap::new()));
+static GAME_SECTIONS: LazyLock<Mutex<HashMap<String, GameSection>>> =
 	LazyLock::new(|| Mutex::new(HashMap::new()));
 
 inventory::submit! {
@@ -31,5 +36,6 @@ fn init() -> MFnResult<'static> {
 
 		SERVER_ENTRIES.lock().await.clear();
 		SERVER_PLAYERS.lock().await.clear();
+		GAME_SECTIONS.lock().await.clear();
 	})
 }

@@ -26,7 +26,7 @@ fn handler(msg: UIMsg) -> MFnResult<'static> {
 		_ = elem.class_list().add_1("expanded");
 		elem.set_inner_html(
 			format!(
-				"<div class='inner'><br><hr>Players<hr>{}</div>",
+				"<div class='inner'><div class='server-header'><h3>Players</h3><hr class='server-separator'></div>{}</div>",
 				player_names
 					.iter()
 					.map(|p| format!("{p}<br>"))

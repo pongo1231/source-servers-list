@@ -4,7 +4,7 @@ use crate::{
 	ui::{
 		UI_CHANNEL,
 		handler::UIMsgHandler,
-		listings::{ClientServerEntry, SERVER_ENTRIES, SERVER_PLAYERS},
+		listings::{ClientServerEntry, GAME_SECTIONS, GameSection, SERVER_ENTRIES, SERVER_PLAYERS},
 		msg::UIMsg,
 	},
 	ws::WS_CHANNEL,
@@ -35,11 +35,47 @@ fn handler(msg: UIMsg) -> MFnResult<'static> {
 		let client_entry = match server_entries.get_mut(&listing.id) {
 			Some(item) => item,
 			None => {
+				let game_key = listing.game.clone();
+				let mut game_sections = GAME_SECTIONS.lock().await;
+				let game_grid = if let Some(section) = game_sections.get(&game_key) {
+					section.grid.clone()
+				} else {
+					let section_div = doc
+						.create_element("div")
+						.unwrap()
+						.unchecked_into::<HtmlElement>();
+					section_div.set_class_name("GameSection");
+
+					let icon_html = match &listing.icon_name {
+						Some(icon) => format!("<img class='game-icon' src='{}' width='32'/>", icon),
+						None => String::new(),
+					};
+
+					section_div.set_inner_html(
+						format!(
+							"<div class='game-header'>{}<h3>{}</h3></div><hr class='game-separator'><div class='game-grid'></div>",
+							icon_html,
+							listing.game
+						).as_str()
+					);
+
+					_ = servers_container.append_child(&section_div);
+
+					let grid = section_div
+						.query_selector(".game-grid")
+						.unwrap()
+						.unwrap()
+						.unchecked_into::<HtmlElement>();
+
+					game_sections.insert(game_key.clone(), GameSection { grid: grid.clone() });
+					grid
+				};
+
 				let item = doc
 					.create_element("div")
 					.unwrap()
 					.unchecked_into::<HtmlElement>();
-				_ = servers_container.append_child(&item);
+				_ = game_grid.append_child(&item);
 				item.set_class_name("ServerContainer");
 
 				server_entries.insert(
@@ -131,12 +167,12 @@ fn handler(msg: UIMsg) -> MFnResult<'static> {
 			ServerListingStatus::Unreachable => {
 				item.set_inner_html(
 					format!(
-						"{}{}<br>IP: {}<br>Unreachable",
+						"<div class='server-header'><p>{}</p>{}<hr class='server-separator'></div>IP: {}<br>Unreachable",
 						listing.game,
 						if listing.name.is_empty() {
 							"".to_string()
 						} else {
-							format!("<h2>{}</h2><br>", listing.name)
+							format!("<h2>{}</h2>", listing.name)
 						},
 						listing.addr
 					)
@@ -148,8 +184,8 @@ fn handler(msg: UIMsg) -> MFnResult<'static> {
 
 				item.set_inner_html(
 				format!(
-					"{}{}</p><h2>{}</h2>{}<br><a href=\"steam://connect/{}\" onclick=\"event.stopPropagation()\">Connect</a><div class='details' id='{}expanded'></div>",
-					if let Some(icon_name) = &listing.icon_name { format!("<p><img class='bg' src='{}' width='32'/>", icon_name) } else { "".to_string() },
+					"<div class='server-header'>{}{}</p><h2>{}</h2><hr class='server-separator'></div>{}<br><a href=\"steam://connect/{}\" onclick=\"event.stopPropagation()\">Connect</a><div class='details' id='{}expanded'></div>",
+					if let Some(icon_name) = &listing.icon_name { format!("<p><img class='bg' src='{}' width='32'/>", icon_name) } else { "<p>".to_string() },
 					listing.game,
 					listing.name,
 					if let Some(ref info) = listing.info {
