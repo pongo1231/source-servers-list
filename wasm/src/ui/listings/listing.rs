@@ -167,13 +167,14 @@ fn handler(msg: UIMsg) -> MFnResult<'static> {
 			ServerListingStatus::Unreachable => {
 				item.set_inner_html(
 					format!(
-						"<div class='server-header'><p>{}</p>{}<hr class='server-separator'></div>IP: {}<br>Unreachable",
+						"<div class='server-header'><p>{}</p>{}<hr class='server-separator'></div><div class='server-footer'><span class='server-left'><span class='server-ip'>{}</span><button class='copy-btn' onclick=\"navigator.clipboard.writeText('{}');event.stopPropagation()\" title=\"Copy IP\"><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><rect x='9' y='9' width='13' height='13' rx='2' ry='2'></rect><path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path></svg></button></span><span class='server-connect'>Unreachable</span></div>",
 						listing.game,
 						if listing.name.is_empty() {
 							"".to_string()
 						} else {
 							format!("<h2>{}</h2>", listing.name)
 						},
+						listing.addr,
 						listing.addr
 					)
 					.as_str(),
@@ -184,7 +185,7 @@ fn handler(msg: UIMsg) -> MFnResult<'static> {
 
 				item.set_inner_html(
 				format!(
-					"<div class='server-header'>{}{}</p><h2>{}</h2><hr class='server-separator'></div>{}<br><a href=\"steam://connect/{}\" onclick=\"event.stopPropagation()\">Connect</a><div class='details' id='{}expanded'></div>",
+					"<div class='server-header'>{}{}</p><h2>{}</h2><hr class='server-separator'></div>{}<div class='server-footer'><span class='server-left'><span class='server-ip'>{}</span><button class='copy-btn' onclick=\"navigator.clipboard.writeText('{}');event.stopPropagation()\" title=\"Copy IP\"><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><rect x='9' y='9' width='13' height='13' rx='2' ry='2'></rect><path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path></svg></button></span><a class='server-connect' href=\"steam://connect/{}\" onclick=\"event.stopPropagation()\">Connect</a></div><div class='details' id='{}expanded'></div>",
 					if let Some(icon_name) = &listing.icon_name { format!("<p><img class='bg' src='{}' width='32'/>", icon_name) } else { "<p>".to_string() },
 					listing.game,
 					listing.name,
@@ -205,6 +206,8 @@ fn handler(msg: UIMsg) -> MFnResult<'static> {
 					} else {
 						"".to_string()
 					},
+					listing.addr,
+					listing.addr,
 					listing.addr,
 					listing.id
 				)
