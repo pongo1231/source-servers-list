@@ -215,6 +215,8 @@ img {
 .server-ip {
 	font-size: 0.7rem;
 	opacity: 0.6;
+	cursor: pointer;
+	transition: opacity 0.15s;
 }
 
 .copy-btn {
@@ -229,7 +231,8 @@ img {
 	transition: opacity 0.15s;
 }
 
-.copy-btn:hover {
+.server-left:hover .server-ip,
+.server-left:hover .copy-btn {
 	opacity: 0.85;
 }
 
